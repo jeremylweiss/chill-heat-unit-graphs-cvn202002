@@ -140,7 +140,7 @@ years <- seq( as.numeric( paste0( 20, obs_yrs[ 1 ] ) ),
               as.numeric( paste0( 20, obs_yrs[ length( obs_yrs ) ] ) ) )
 col_names <- c( "Winter", "iDay", "JDay", "AGGDs" )
 
-for ( iyr in 1:length( years )-1 ) {
+for ( iyr in 1:( length( years )-1 ) ) {
   
   winter_yr1 <- years[ iyr ]
   winter_yr2 <- years[ iyr+1 ]
@@ -168,7 +168,7 @@ for ( iyr in 1:length( years )-1 ) {
     #  Calculate AGDD values for the given winter year.
     for ( d in 1:nrow( winter_data ) ) {
       if ( winter_data$JDay[ d ] >= doy_start+1 & winter_data$JDay[ d ] <= doy_start+30 ) {
-        winter_agdds$agdds[ d ] = NA  #  November values
+        winter_agdds$AGGDs[ d ] = NA  #  November values
       } else if ( winter_data$JDay[ d ] == doy_start+30+1 ) {
         winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
       } else {
@@ -177,16 +177,6 @@ for ( iyr in 1:length( years )-1 ) {
     }
     
   }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   #####  CONDITION 2
   
@@ -209,46 +199,29 @@ for ( iyr in 1:length( years )-1 ) {
     winter_agdds$JDay <- winter_data$JDay
     
     #  Calculate AGDD values for the given winter year.
-    
-    
-    
-    #  Condition 2: when neither calendar years of a winter year is
-    #  a leap year
-    for ( d in 1:nrow( y ) ) {
-      if ( y$JDay[ d ] >= 305 & y$JDay[ d ] < 335 ) {
-        aggds1718$CGGDs[ d ] = NA
-      } else if ( y$JDay[ d ] == 335 ) {
-        aggds1718$CGGDs[ d ] = y$GDDs[ d ]
+    for ( d in 1:nrow( winter_data ) ) {
+      if ( winter_data$JDay[ d ] >= doy_start & winter_data$JDay[ d ] <= doy_start+30-1 ) {
+        winter_agdds$AGGDs[ d ] = NA  #  November values
+      } else if ( winter_data$JDay[ d ] == doy_start+30 ) {
+        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
       } else {
-        aggds1718$CGGDs[ d ] = y$GDDs[ d ] + aggds1718$CGGDs[ d-1 ]
+        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
       }
     }
-    
-    for ( d in 1:nrow( y ) ) {
-      if ( y$JDay[ d ] >= 305 & y$JDay[ d ] < 335 ) {
-        aggds1819$CGGDs[ d ] = NA
-      } else if ( y$JDay[ d ] == 335 ) {
-        aggds1819$CGGDs[ d ] = y$GDDs[ d ]
-      } else {
-        aggds1819$CGGDs[ d ] = y$GDDs[ d ] + aggds1819$CGGDs[ d-1 ]
-      }
-    }
-    
-  }
   
-  
-  
+   }
   
   #####  CONDITION 3
   
   #  Condition 3: when second calendar year of a winter year is a
   #  leap year
   else if ( leap_year( winter_yr1 ) == FALSE & leap_year( winter_yr2 ) == TRUE ) {
+    
+    #  Filter data by given winter year.
     winter_data <- rbind( stn_data_daily %>%
                             filter( Year == winter_yr1 & JDay >= doy_start ),
                           stn_data_daily %>%
                             filter( Year == winter_yr2 & JDay <= doy_end+1 ) )
-    
     
     #  Initialize and setup dataframe that will store AGDD values 
     #  for the given winter year.
@@ -258,49 +231,20 @@ for ( iyr in 1:length( years )-1 ) {
     winter_agdds$iDay <- seq( 1, nrow( winter_data ) )
     winter_agdds$JDay <- winter_data$JDay
     
-    
-    #  Condition 3: when second calendar year of a winter year is a
-    #  leap year
-    for ( d in 1:nrow( y ) ) {
-      if ( y$JDay[ d ] >= 305 & y$JDay[ d ] < 335 ) {
-        aggds1920$CGGDs[ d ] = NA
-      } else if ( y$JDay[ d ] == 335 ) {
-        aggds1920$CGGDs[ d ] = y$GDDs[ d ]
+    #  Calculate AGDD values for the given winter year.
+    for ( d in 1:nrow( winter_data ) ) {
+      if ( winter_data$JDay[ d ] >= doy_start & winter_data$JDay[ d ] <= doy_start+30-1 ) {
+        winter_agdds$AGGDs[ d ] = NA  #  November values
+      } else if ( winter_data$JDay[ d ] == doy_start+30 ) {
+        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
       } else {
-        aggds1920$CGGDs[ d ] = y$GDDs[ d ] + aggds1920$CGGDs[ d-1 ]
+        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
       }
     }
     
-    rm( d )
-    
-    
-    
-    
-    
-    
   }
   
-  #####
-  
-  
-  
-  
-  
-  
-  
-
-  
- 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  rm( d )
   
   #  Concatenate AGDD data from different winters.
   if ( iyr == 1 ) {
@@ -309,10 +253,20 @@ for ( iyr in 1:length( years )-1 ) {
     agdds <- rbind( agdds, winter_agdds )
   }
   
-  rm( winter_agdds, winter_data, winter_yr1, winter_yr2 )
+  rm( winter_agdds, winter_data )
   
 }
-rm( col_names, iyr )
+
+rm( col_names, iyr, winter_yr1, winter_yr2 )  
+
+#####
+  
+ 
+
+
+
+
+
 
 
 ##################################################################
