@@ -135,10 +135,10 @@ rm( d )
 
 #  Calculate accumulated growing degree days (AGDDs) and put into
 #  new dataframe, accounting for leap years. Start date for 
-#  calculations is December 1 of a given winter.
+#  calculations is December 1 of a given winter year.
 years <- seq( as.numeric( paste0( 20, obs_yrs[ 1 ] ) ),
               as.numeric( paste0( 20, obs_yrs[ length( obs_yrs ) ] ) ) )
-col_names <- c( "Winter", "iDay", "JDay", "AGGDs" )
+col_names <- c( "Winter", "iDay", "JDay", "AGDDs" )
 
 for ( iyr in 1:( length( years )-1 ) ) {
   
@@ -168,11 +168,11 @@ for ( iyr in 1:( length( years )-1 ) ) {
     #  Calculate AGDD values for the given winter year.
     for ( d in 1:nrow( winter_data ) ) {
       if ( winter_data$JDay[ d ] >= doy_start+1 & winter_data$JDay[ d ] <= doy_start+30 ) {
-        winter_agdds$AGGDs[ d ] = NA  #  November values
+        winter_agdds$AGDDs[ d ] <- NA  #  November values
       } else if ( winter_data$JDay[ d ] == doy_start+30+1 ) {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ]  #  December 1 value
       } else {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
       }
     }
     
@@ -201,11 +201,11 @@ for ( iyr in 1:( length( years )-1 ) ) {
     #  Calculate AGDD values for the given winter year.
     for ( d in 1:nrow( winter_data ) ) {
       if ( winter_data$JDay[ d ] >= doy_start & winter_data$JDay[ d ] <= doy_start+30-1 ) {
-        winter_agdds$AGGDs[ d ] = NA  #  November values
+        winter_agdds$AGDDs[ d ] = NA  #  November values
       } else if ( winter_data$JDay[ d ] == doy_start+30 ) {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ]  #  December 1 value
       } else {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
       }
     }
   
@@ -234,11 +234,11 @@ for ( iyr in 1:( length( years )-1 ) ) {
     #  Calculate AGDD values for the given winter year.
     for ( d in 1:nrow( winter_data ) ) {
       if ( winter_data$JDay[ d ] >= doy_start & winter_data$JDay[ d ] <= doy_start+30-1 ) {
-        winter_agdds$AGGDs[ d ] = NA  #  November values
+        winter_agdds$AGDDs[ d ] = NA  #  November values
       } else if ( winter_data$JDay[ d ] == doy_start+30 ) {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ]  #  December 1 value
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ]  #  December 1 value
       } else {
-        winter_agdds$AGDDs[ d ] = winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
+        winter_agdds$AGDDs[ d ] <- winter_data$GDDs[ d ] + winter_agdds$AGDDs[ d-1 ]  #  all other day values
       }
     }
     
@@ -287,65 +287,103 @@ library( "chillR" )
 #####
 
 
-#  calculate daily chill portions for winter 2016-2017
-stn_data_x <- filter( stn_data, Year == 2016 | Year == 2017 )
-x <- chilling( hourtemps = stn_data_x,
-               Start_JDay = 306,  # leap year value for November 1
-               End_JDay = 120 )
+#  Calculate accumulated chilling units and put into a new 
+#  dataframe, accounting for leap years. Start date for 
+#  calculations is November 1 of a given winter year.
+col_names <- c( "Winter", "iDay", "JDay",
+                "Chilling_Hours", "Utah_Model", "Chill_portions", "GDH" )  # different chilling units
 
-# initialize and label columns of dataframe
-chill1617 <- data.frame( matrix( data = NA,
-                              nrow = x$Data_days[ which( x$Season == "2016/2017" ) ],
-                              ncol = 7 ) )
-colnames( chill1617 ) <- c( "Winter",
-                         "iDay",
-                         "JDay",
-                         "Chilling_Hours",
-                         "Utah_Model",
-                         "Chill_portions",
-                         "GDH" )
-chill1617$Winter <- "2016-2017"
-rm( x )
+for ( iyr in 1:( length( years )-1 ) ) {
+  
+  winter_yr1 <- years[ iyr ]
+  winter_yr2 <- years[ iyr+1 ]
+  
+  #  Filter data by given winter year.
+  winter_data <- filter( stn_data, Year == winter_yr1 | Year == winter_yr2 )
+  
+  #####  CONDITION 1
+  
+  #  Condition 1: when first calendar year of a winter year is a
+  #  leap year
+  if ( leap_year( winter_yr1 ) == TRUE & leap_year( winter_yr2 ) == FALSE ) {
+    
+    #  Calculate different daily chilling units for given winter 
+    #  year. This is an initial step to help initialize the 
+    #  dataframe that will take analysis values, not the actual
+    #  analysis. 
+    x <- chilling( hourtemps = winter_data,
+                   Start_JDay = doy_start+1,  # leap year value for November 1
+                   End_JDay = doy_end )
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    #  Initialize and label columns of the dataframe that will take
+    #  analysis values.
+    chill_data <- data.frame( matrix( data = NA,
+                                      nrow = x$Data_days[ which( x$Season == "2016/2017" ) ],
+                                      ncol = 7 ) )
+    colnames( chill_data ) <- col_names
+    chill_data$Winter <- "2016-2017"
+    rm( x )
+    
+    #  calculate daily chill portions for 2016 and write to 
+    #  dataframe
+    d <- 1
+    for ( jday in 306:366 ) {
+      chill_data$iDay[ d ] <- d
+      chill_data$JDay[ d ] <- jday
+      x <- chilling( hourtemps = stn_data_x,
+                     Start_JDay = 305,  # leap year value for October 31
+                     End_JDay = jday )
+      chill_data$Chilling_Hours[ d ] <- x$Chilling_Hours[ which( x$End_year == 2016 ) ]
+      chill_data$Utah_Model[ d ] <- x$Utah_Model[ which( x$End_year == 2016 ) ]
+      chill_data$Chill_portions[ d ] <- x$Chill_portions[ which( x$End_year == 2016 ) ]
+      chill_data$GDH[ d ] <- x$GDH[ which( x$End_year == 2016 ) ]
+      d <- d+1
+      rm( x )
+    }
+    rm( jday )
+    
+    #  calculate daily chill portions for 2017 and write to 
+    #  dataframe
+    for ( jday in 1:120 ) {
+      chill_data$iDay[ d ] <- d
+      chill_data$JDay[ d ] <- jday
+      x <- chilling( hourtemps = stn_data_x,
+                     Start_JDay = 305,  # leap year value for October 31
+                     End_JDay = jday )
+      chill_data$Chilling_Hours[ d ] <- x$Chilling_Hours[ which( x$End_year == 2017 ) ]
+      chill_data$Utah_Model[ d ] <- x$Utah_Model[ which( x$End_year == 2017 ) ]
+      chill_data$Chill_portions[ d ] <- x$Chill_portions[ which( x$End_year == 2017 ) ]
+      chill_data$GDH[ d ] <- x$GDH[ which( x$End_year == 2017 ) ]
+      d <- d+1
+      rm( x )
+    }
+    rm( d,jday,stn_data_x )
+    
+  }
 
-#  calculate daily chill portions for 2016 and write to 
-#  dataframe
-d <- 1
-for ( jday in 306:366 ) {
-  chill1617$iDay[ d ] <- d
-  chill1617$JDay[ d ] <- jday
-  x <- chilling( hourtemps = stn_data_x,
-                 Start_JDay = 305,  # leap year value for October 31
-                 End_JDay = jday )
-  chill1617$Chilling_Hours[ d ] <- x$Chilling_Hours[ which( x$End_year == 2016 ) ]
-  chill1617$Utah_Model[ d ] <- x$Utah_Model[ which( x$End_year == 2016 ) ]
-  chill1617$Chill_portions[ d ] <- x$Chill_portions[ which( x$End_year == 2016 ) ]
-  chill1617$GDH[ d ] <- x$GDH[ which( x$End_year == 2016 ) ]
-  d <- d+1
-  rm( x )
-}
-rm( jday )
 
-#  calculate daily chill portions for 2017 and write to 
-#  dataframe
-for ( jday in 1:120 ) {
-  chill1617$iDay[ d ] <- d
-  chill1617$JDay[ d ] <- jday
-  x <- chilling( hourtemps = stn_data_x,
-                 Start_JDay = 305,  # leap year value for October 31
-                 End_JDay = jday )
-  chill1617$Chilling_Hours[ d ] <- x$Chilling_Hours[ which( x$End_year == 2017 ) ]
-  chill1617$Utah_Model[ d ] <- x$Utah_Model[ which( x$End_year == 2017 ) ]
-  chill1617$Chill_portions[ d ] <- x$Chill_portions[ which( x$End_year == 2017 ) ]
-  chill1617$GDH[ d ] <- x$GDH[ which( x$End_year == 2017 ) ]
-  d <- d+1
-  rm( x )
-}
-rm( d,jday,stn_data_x )
+
+
+
+
+
+
+
+
+
 
 matplot( chill1617$iDay,
          cbind( chill1617$Chilling_Hours / 10, chill1617$Chill_portions ),
          col = c( "black","red" ), type = "l")
-
 
 #####
 
